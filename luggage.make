@@ -49,6 +49,7 @@ CP=/bin/cp
 INSTALL=/usr/bin/install
 DITTO=/usr/bin/ditto
 UNZIP=/usr/bin/unzip
+PB=/usr/libexec/PlistBuddy
 
 PACKAGEMAKER=/Developer/usr/bin/packagemaker
 
