@@ -180,7 +180,6 @@ modify_packageroot:
 
 prep_pkg:
 	@make clean
-	@make payload
 	@make compile_package
 
 pkg: prep_pkg
