@@ -72,7 +72,7 @@ PAYLOAD_D=${SCRATCH_D}/payload
 # --no-recommend. You can disable this by overriding PM_EXTRA_ARGS in your
 # package's Makefile.
 
-PM_EXTRA_ARGS=--verbose --no-recommend
+PM_EXTRA_ARGS=--verbose --no-recommend --no-relocate
 
 # Override if you want to require a restart after installing your package.
 PM_RESTART=None
@@ -392,6 +392,16 @@ l_var_root: l_var
 	@sudo chown -R root:wheel ${WORK_D}/var/root
 	@sudo chmod -R 750 ${WORK_D}/var/root
 
+l_var_root_Library: l_var_root
+	@sudo mkdir -p ${WORK_D}/var/root/Library
+	@sudo chown -R root:wheel ${WORK_D}/var/root/Library
+	@sudo chmod -R 700 ${WORK_D}/var/root/Library
+
+l_var_root_Library_Preferences: l_var_root_Library
+	@sudo mkdir -p ${WORK_D}/var/root/Library/Preferences
+	@sudo chown -R root:wheel ${WORK_D}/var/root/Library/Preferences
+	@sudo chmod -R 700 ${WORK_D}/var/root/Library/Preferences
+
 l_Applications: l_root
 	@sudo mkdir -p ${WORK_D}/Applications
 	@sudo chown root:admin ${WORK_D}/Applications
@@ -457,6 +467,11 @@ l_Library_Preferences_DirectoryService: l_Library_Preferences
 	@sudo chown root:admin ${WORK_D}/Library/Preferences/DirectoryService
 	@sudo chmod 775 ${WORK_D}/Library/Preferences/DirectoryService
 
+l_Library_PreferencePanes: l_Library
+	@sudo mkdir -p ${WORK_D}/Library/PreferencePanes
+	@sudo chown root:wheel ${WORK_D}/Library/PreferencePanes
+	@sudo chmod 755 ${WORK_D}/Library/PreferencePanes
+
 l_Library_Printers: l_Library
 	@sudo mkdir -p ${WORK_D}/Library/Printers
 	@sudo chown root:admin ${WORK_D}/Library/Printers
@@ -514,6 +529,11 @@ l_Library_Ruby_Site_1_8: l_Library_Ruby_Site
 	@sudo chown root:admin ${WORK_D}/Library/Ruby/Site/1.8
 	@sudo chmod 775 ${WORK_D}/Library/Ruby/Site/1.8
 
+l_Library_StartupItems: l_Library
+	@sudo mkdir -p ${WORK_D}/Library/StartupItems
+	@sudo chown root:wheel ${WORK_D}/Library/StartupItems
+	@sudo chmod 755 ${WORK_D}/Library/StartupItems
+
 l_System: l_root
 	@sudo mkdir -p ${WORK_D}/System
 	@sudo chown -R root:wheel ${WORK_D}/System
@@ -523,6 +543,11 @@ l_System_Library: l_System
 	@sudo mkdir -p ${WORK_D}/System/Library
 	@sudo chown -R root:wheel ${WORK_D}/System/Library
 	@sudo chmod -R 755 ${WORK_D}/System/Library
+
+l_System_Library_Extensions: l_System_Library
+	@sudo mkdir -p ${WORK_D}/System/Library/Extensions
+	@sudo chown -R root:wheel ${WORK_D}/System/Library/Extensions
+	@sudo chmod -R 755 ${WORK_D}/System/Library/Extensions
 
 l_System_Library_User_Template: l_System_Library
 	@sudo mkdir -p ${WORK_D}/System/Library/User\ Template/English.lproj
@@ -630,6 +655,9 @@ pack-usr-local-bin-%: % l_usr_local_bin
 pack-usr-local-sbin-%: % l_usr_local_sbin
 	@sudo ${INSTALL} -m 755 -g wheel -o root $< ${WORK_D}/usr/local/sbin
 
+pack-var-root-Library-Preferences-%: % l_var_root_Library_Preferences
+	@sudo ${INSTALL} -m 600 -g wheel -o root $< ${WORK_D}/var/root/Library/Preferences
+
 pack-man-%: l_usr_man
 	@sudo ${INSTALL} -m 0644 -g wheel -o root $< ${WORK_D}/usr/share/man
 
@@ -681,3 +709,16 @@ ungz-applications-%: %.tar.gz l_Applications
 ungz-utilities-%: %.tar.gz l_Applications_Utilities
 	@sudo ${TAR} xzf $< -C ${WORK_D}/Applications/Utilities
 	@sudo chown -R root:admin ${WORK_D}/Applications/Utilities/$(shell echo $< | sed s/\.tar\.gz//g)
+
+# ${DITTO} preserves resource forks by default
+# --noqtn drops quarantine information
+# -k -x extracts zip
+# Zipped applications commonly found on the Web usually have the suffixes substituted, so these stanzas substitute them back
+
+unzip-applications-%: %.zip l_Applications
+	@sudo ${DITTO} --noqtn -k -x $< ${WORK_D}/Applications/
+	@sudo chown -R root:admin ${WORK_D}/Applications/$(shell echo $< | sed s/\.zip/.app/g)
+
+unzip-utilities-%: %.zip l_Applications_Utilities
+	@sudo ${DITTO} --noqtn -k -x $< ${WORK_D}/Applications/Utilities/
+	@sudo chown -R root:admin ${WORK_D}/Applications/Utilities/$(shell echo $< | sed s/\.zip/.app/g)
